@@ -12,17 +12,17 @@ interface Block{
 }
 
 type Contract implements Block @entity {
-  id: ID!
+  id: ID! #contract address
   name: String!
-  totalSupply: BigInt! # address
+  totalSupply: BigInt!
   blockNumber: BigInt!
-  timeStamp:BigInt!
+  timeStamp: BigInt!
   blockHash: Bytes!
 }
 
 type TransferEvent implements Transaction & Block @entity{
-  id: ID!
-  from: Bytes! #sender as id
+  id: ID! #sender as id
+  from: Bytes! 
   to: Bytes!
   value: BigInt!
   contract: Contract

@@ -1,4 +1,4 @@
-specVersion: 0.0.1
+specVersion: 0.0.2
 schema:
   file: ./schema.graphql
 dataSources:
@@ -8,17 +8,14 @@ dataSources:
     source:
       address: "0xD6DF932A45C0f255f85145f286eA0b292B21C90B"
       abi: Aave
+      startBlock: 11665999
     mapping:
       kind: ethereum/events
-      apiVersion: 0.0.2
+      apiVersion: 0.0.4
       language: wasm/assemblyscript
       entities:
-        - Approval
-        - MetaTransactionExecuted
-        - RoleAdminChanged
-        - RoleGranted
-        - RoleRevoked
-        - Transfer
+        - Contract
+        - TransferEvent
       abis:
         - name: Aave
           file: ./abis/Aave.json

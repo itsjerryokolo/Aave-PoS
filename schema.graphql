@@ -1,6 +1,33 @@
-type ExampleEntity @entity {
+interface Transaction{
   id: ID!
-  count: BigInt!
-  owner: Bytes! # address
-  spender: Bytes! # address
+  txHash: Bytes!
+  timeStamp: BigInt!
+}
+
+interface Block{
+  id: ID!
+  blockNumber: BigInt!
+  blockHash: Bytes!
+  timeStamp: BigInt!
+}
+
+type Contract implements Block @entity {
+  id: ID!
+  name: String!
+  totalSupply: BigInt! # address
+  blockNumber: BigInt!
+  timeStamp:BigInt!
+  blockHash: Bytes!
+}
+
+type TransferEvent implements Transaction & Block @entity{
+  id: ID!
+  from: Bytes! #sender as id
+  to: Bytes!
+  value: BigInt!
+  contract: Contract
+  blockNumber: BigInt!
+  blockHash: Bytes!
+  txHash: Bytes!
+  timeStamp: BigInt!
 }

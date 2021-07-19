@@ -1,4 +1,4 @@
-import { BigInt } from "@graphprotocol/graph-ts"
+import { BigInt } from "@graphprotocol/graph-ts";
 import {
   Aave,
   Approval,
@@ -6,75 +6,11 @@ import {
   RoleAdminChanged,
   RoleGranted,
   RoleRevoked,
-  Transfer
-} from "../generated/Aave/Aave"
-import { ExampleEntity } from "../generated/schema"
+  Transfer,
+} from "../generated/Aave/Aave";
+import { Contract, TransferEvent } from "../generated/schema";
 
-export function handleApproval(event: Approval): void {
-  // Entities can be loaded from the store using a string ID; this ID
-  // needs to be unique across all entities of the same type
-  let entity = ExampleEntity.load(event.transaction.from.toHex())
-
-  // Entities only exist after they have been saved to the store;
-  // `null` checks allow to create entities on demand
-  if (entity == null) {
-    entity = new ExampleEntity(event.transaction.from.toHex())
-
-    // Entity fields can be set using simple assignments
-    entity.count = BigInt.fromI32(0)
-  }
-
-  // BigInt and BigDecimal math are supported
-  entity.count = entity.count + BigInt.fromI32(1)
-
-  // Entity fields can be set based on event parameters
-  entity.owner = event.params.owner
-  entity.spender = event.params.spender
-
-  // Entities can be written to the store with `.save()`
-  entity.save()
-
-  // Note: If a handler doesn't require existing field values, it is faster
-  // _not_ to load the entity from the store. Instead, create it fresh with
-  // `new Entity(...)`, set the fields that should be updated and save the
-  // entity back to the store. Fields that were not set or unset remain
-  // unchanged, allowing for partial updates to be applied.
-
-  // It is also possible to access smart contracts from mappings. For
-  // example, the contract that has emitted the event can be connected to
-  // with:
-  //
-  // let contract = Contract.bind(event.address)
-  //
-  // The following functions can then be called on this contract to access
-  // state variables and other data:
-  //
-  // - contract.CHILD_CHAIN_ID(...)
-  // - contract.CHILD_CHAIN_ID_BYTES(...)
-  // - contract.DEFAULT_ADMIN_ROLE(...)
-  // - contract.DEPOSITOR_ROLE(...)
-  // - contract.ERC712_VERSION(...)
-  // - contract.ROOT_CHAIN_ID(...)
-  // - contract.ROOT_CHAIN_ID_BYTES(...)
-  // - contract.allowance(...)
-  // - contract.approve(...)
-  // - contract.balanceOf(...)
-  // - contract.decimals(...)
-  // - contract.decreaseAllowance(...)
-  // - contract.getChainId(...)
-  // - contract.getDomainSeperator(...)
-  // - contract.getNonce(...)
-  // - contract.getRoleAdmin(...)
-  // - contract.getRoleMember(...)
-  // - contract.getRoleMemberCount(...)
-  // - contract.hasRole(...)
-  // - contract.increaseAllowance(...)
-  // - contract.name(...)
-  // - contract.symbol(...)
-  // - contract.totalSupply(...)
-  // - contract.transfer(...)
-  // - contract.transferFrom(...)
-}
+export function handleApproval(event: Approval): void {}
 
 export function handleMetaTransactionExecuted(
   event: MetaTransactionExecuted
@@ -86,4 +22,38 @@ export function handleRoleGranted(event: RoleGranted): void {}
 
 export function handleRoleRevoked(event: RoleRevoked): void {}
 
-export function handleTransfer(event: Transfer): void {}
+export function handleTransfer(event: Transfer): void {
+  let aave = Aave.bind(event.address);
+  let contract = new Contract(event.address.toHexString());
+  let transferEvent = TransferEvent.load(event.params.to.toHexString());
+
+  if (transferEvent == null) {
+    transferEvent = new TransferEvent(event.params.to.toHexString());
+  }
+
+  let nameCall = aave.try_name();
+  if (!nameCall.reverted) {
+    contract.name = nameCall.value;
+  }
+
+  let totalSupplyCall = aave.try_totalSupply();
+  if (!totalSupplyCall.reverted) {
+    contract.totalSupply = totalSupplyCall.value;
+  }
+
+  contract.blockNumber = event.block.number
+  contract.timeStamp = event.block.timestamp
+  contract.blockHash = event.block.hash
+
+  transferEvent.from = event.params.from;
+  transferEvent.to = event.params.to;
+  transferEvent.value = event.params.value;
+  transferEvent.contract = contract.id;
+  transferEvent.blockHash = event.block.hash;
+  transferEvent.blockNumber = event.block.number;
+  transferEvent.timeStamp = event.block.timestamp;
+  transferEvent.txHash = event.transaction.hash;
+
+  transferEvent.save();
+  contract.save();
+}
